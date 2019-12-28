@@ -1,4 +1,4 @@
-# mcserver
+# SteamCMD
 Small image intended to be a foundation for game servers.
 
 ## Fork Me!
