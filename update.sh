@@ -29,13 +29,13 @@ NEXT_VERSION="$CURRENT_VERSION"
 
 # Base Image
 IMAGE_RELEASE="stable"
-CURRENT_DEBIAN_VERSION=$(cat Dockerfile | grep -P -o "FROM debian:$IMAGE_RELEASE-\K(\d+)-slim")
-CURRENT_DEBIAN_VERSION="${CURRENT_DEBIAN_VERSION%-slim}"
-DEBIAN_VERSION=$(curl -L -s 'https://registry.hub.docker.com/v2/repositories/library/debian/tags?page_size=128' | jq '."results"[]["name"]' | grep -m 1 -P -o "$IMAGE_RELEASE-\K(\d+)-slim")
-DEBIAN_VERSION="${DEBIAN_VERSION%-slim}"
-if [ "$CURRENT_DEBIAN_VERSION" != "$DEBIAN_VERSION" ]
+CURRENT_IMAGE_VERSION=$(cat Dockerfile | grep -P -o "FROM debian:$IMAGE_RELEASE-\K(\d+)-slim")
+CURRENT_IMAGE_VERSION="${CURRENT_IMAGE_VERSION%-slim}"
+IMAGE_VERSION=$(curl -L -s 'https://registry.hub.docker.com/v2/repositories/library/debian/tags?page_size=128' | jq '."results"[]["name"]' | grep -m 1 -P -o "$IMAGE_RELEASE-\K(\d+)-slim")
+IMAGE_VERSION="${IMAGE_VERSION%-slim}"
+if [ "$CURRENT_IMAGE_VERSION" != "$IMAGE_VERSION" ]
 then
-	echo "Debian Stable $DEBIAN_VERSION available!"
+	echo "StableDebian $IMAGE_VERSION available!"
 
 	RELEASE="${CURRENT_VERSION#*-}"
 	NEXT_VERSION="${CURRENT_VERSION%-*}-$((RELEASE+1))"
@@ -66,11 +66,11 @@ then
 fi
 
 # SteamCMD
-CURRENT_STEAM_SHA=$(cat Dockerfile | grep -P -o "STEAM_SHA=\K\w+")
-STEAM_SHA=$(curl -L -s "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" | sha256sum | cut -d ' ' -f 1)
-if [ "$CURRENT_STEAM_SHA" != "$STEAM_SHA" ]
+CURRENT_APP_VERSION=$(cat Dockerfile | grep -P -o "STEAM_SHA=\K\w+")
+APP_VERSION=$(curl -L -s "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" | sha256sum | cut -d ' ' -f 1)
+if [ "$CURRENT_APP_VERSION" != "$APP_VERSION" ]
 then
-	echo "SteamCMD sha256:$STEAM_SHA available!"
+	echo "SteamCMD sha256:$APP_VERSION available!"
 
 	MINOR_VERSION="${CURRENT_VERSION%-*}"
 	MINOR_VERSION="${MINOR_VERSION#*.}"
@@ -81,12 +81,18 @@ if [ "$CURRENT_VERSION" == "$NEXT_VERSION" ]
 then
 	echo "No updates available."
 else
-	read -p "Save changes? [y/n]" -n 1 -r && echo
-	if [[ $REPLY =~ ^[Yy]$ ]]
+	if [ "$1" == "--noconfirm" ]
 	then
-		if [ "$CURRENT_DEBIAN_VERSION" != "$DEBIAN_VERSION" ]
+		SAVE="y"
+	else
+		read -p "Save changes? [y/n]" -n 1 -r SAVE && echo
+	fi
+	
+	if [[ $SAVE =~ ^[Yy]$ ]]
+	then
+		if [ "$CURRENT_IMAGE_VERSION" != "$IMAGE_VERSION" ]
 		then
-			sed -i "s|FROM debian:$IMAGE_RELEASE.*|FROM debian:$IMAGE_RELEASE-$DEBIAN_VERSION-slim|" Dockerfile
+			sed -i "s|FROM debian:$IMAGE_RELEASE.*|FROM debian:$IMAGE_RELEASE-$IMAGE_VERSION-slim|" Dockerfile
 		fi
 
 		if [ "$CURRENT_LIBGCC_VERSION" != "$LIBGCC_VERSION" ]
@@ -99,13 +105,19 @@ else
 			sed -i "s|$CA_PKG=.*|$CA_PKG=$CA_VERSION|" Dockerfile
 		fi
 
-		if [ "$CURRENT_STEAM_SHA" != "$STEAM_SHA" ]
+		if [ "$CURRENT_APP_VERSION" != "$APP_VERSION" ]
 		then
-			sed -i "s|STEAM_SHA=.*|STEAM_SHA=$STEAM_SHA|" Dockerfile
+			sed -i "s|STEAM_SHA=.*|STEAM_SHA=$APP_VERSION|" Dockerfile
 		fi
 
-		read -p "Commit changes? [y/n]" -n 1 -r && echo
-		if [[ $REPLY =~ ^[Yy]$ ]]
+		if [ "$1" == "--noconfirm" ]
+		then
+			COMMIT="y"
+		else
+			read -p "Commit changes? [y/n]" -n 1 -r COMMIT && echo
+		fi
+
+		if [[ $COMMIT =~ ^[Yy]$ ]]
 		then
 			git add Dockerfile
 			git commit -m "Version bump to $NEXT_VERSION"
