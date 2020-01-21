@@ -21,5 +21,6 @@ then
 	docker run \
 	--rm \
 	--interactive \
+	--name "$APP_NAME" \
 	"$APP_NAME" ./steamcmd.sh +login anonymous +quit
 fi
