@@ -1,23 +1,28 @@
 #!/usr/bin/env bash
 
-set -e
-trap "exit" SIGINT
 
-if ! docker version &> /dev/null
-then
+# Abort on any error
+set -eu
+
+# Simpler git usage, relative file paths
+CWD=$(dirname "$0")
+cd "$CWD"
+
+# Load helpful functions
+source libs/common.sh
+
+# Check acces do docker daemon
+assert_dependency "docker"
+if ! docker version &> /dev/null; then
     echo "Docker daemon is not running or you have unsufficient permissions!"
     exit -1
 fi
 
-WORK_DIR="${0%/*}"
-cd "$WORK_DIR"
-
+# Build the image
 APP_NAME="steamcmd"
 docker build --tag "$APP_NAME" .
 
-read -p "Test image? [y/n]" -n 1 -r && echo
-if [[ $REPLY =~ ^[Yy]$ ]]
-then
+if confirm_action "Test image?"; then
 	docker run \
 	--rm \
 	--interactive \

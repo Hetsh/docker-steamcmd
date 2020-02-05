@@ -1,129 +1,102 @@
 #!/usr/bin/env bash
 
-set -e
-trap "exit" SIGINT
 
-if [ "$USER" == "root" ]
-then
-	echo "Must not be executed as user \"root\"!"
-	exit -1
-fi
+# Abort on any error
+set -eu
 
-if ! [ -x "$(command -v jq)" ]
-then
-	echo "JSON Parser \"jq\" is required but not installed!"
-	exit -2
-fi
+# Simpler git usage, relative file paths
+CWD=$(dirname "$0")
+cd "$CWD"
 
-if ! [ -x "$(command -v curl)" ]
-then
-	echo "\"curl\" is required but not installed!"
-	exit -3
-fi
+# Load helpful functions
+source libs/common.sh
+source libs/docker.sh
 
-WORK_DIR="${0%/*}"
-cd "$WORK_DIR"
+# Check dependencies
+assert_dependency "jq"
+assert_dependency "curl"
 
+# Current version of docker image
 CURRENT_VERSION=$(git describe --tags --abbrev=0)
-NEXT_VERSION="$CURRENT_VERSION"
+register_current_version "$CURRENT_VERSION"
 
 # Base Image
-IMAGE_RELEASE="stable"
-CURRENT_IMAGE_VERSION=$(cat Dockerfile | grep -P -o "FROM debian:$IMAGE_RELEASE-\K(\d+)-slim")
-CURRENT_IMAGE_VERSION="${CURRENT_IMAGE_VERSION%-slim}"
-IMAGE_VERSION=$(curl -L -s 'https://registry.hub.docker.com/v2/repositories/library/debian/tags?page_size=128' | jq '."results"[]["name"]' | grep -m 1 -P -o "$IMAGE_RELEASE-\K(\d+)-slim")
-IMAGE_VERSION="${IMAGE_VERSION%-slim}"
-if [ "$CURRENT_IMAGE_VERSION" != "$IMAGE_VERSION" ]
-then
-	echo "StableDebian $IMAGE_VERSION available!"
-
-	RELEASE="${CURRENT_VERSION#*-}"
-	NEXT_VERSION="${CURRENT_VERSION%-*}-$((RELEASE+1))"
+IMAGE_PKG="debian"
+IMAGE_NAME="Debian"
+IMAGE_CHANNEL="stable"
+IMAGE_REGEX="$IMAGE_CHANNEL-(\d+)-slim"
+IMAGE_TAGS=$(curl -L -s "https://registry.hub.docker.com/v2/repositories/library/$IMAGE_PKG/tags?page_size=128" | jq '."results"[]["name"]' | grep -P -w "$IMAGE_REGEX" | tr -d '"')
+IMAGE_VERSION=$(echo "$IMAGE_TAGS" | sort | tail -n 1)
+CURRENT_IMAGE_VERSION=$(cat Dockerfile | grep -P -o "$IMAGE_PKG:\K$IMAGE_REGEX")
+if [ "$CURRENT_IMAGE_VERSION" != "$IMAGE_VERSION" ]; then
+	echo "$IMAGE_NAME $IMAGE_VERSION available!"
+	update_release
 fi
 
-# lib32gcc
+# 32bit GCC libs
 LIBGCC_PKG="lib32gcc1"
-CURRENT_LIBGCC_VERSION=$(cat Dockerfile | grep -P -o "$LIBGCC_PKG=\K\d+:(\d+\.)+\d+-\d+")
-LIBGCC_VERSION=$(curl -L -s "https://packages.debian.org/$IMAGE_RELEASE/$LIBGCC_PKG" | grep -P -o "$LIBGCC_PKG \(\K\d+:(\d+\.)+\d+-\d+")
-if [ "$CURRENT_LIBGCC_VERSION" != "$LIBGCC_VERSION" ]
-then
-	echo "32bit GCC libs $LIBGCC_VERSION available!"
-
-	RELEASE="${CURRENT_VERSION#*-}"
-	NEXT_VERSION="${CURRENT_VERSION%-*}-$((RELEASE+1))"
+LIBGCC_NAME="32bit GCC libs"
+LIBGCC_REGEX="\d+:(\d+\.)+\d+-\d+"
+LIBGCC_VERSION=$(curl -L -s "https://packages.debian.org/$IMAGE_CHANNEL/$LIBGCC_PKG" | grep -P -o "$LIBGCC_PKG \(\K$LIBGCC_REGEX")
+CURRENT_LIBGCC_VERSION=$(cat Dockerfile | grep -P -o "$LIBGCC_PKG=\K$LIBGCC_REGEX")
+if [ "$CURRENT_LIBGCC_VERSION" != "$LIBGCC_VERSION" ]; then
+	echo "$LIBGCC_NAME $LIBGCC_VERSION available!"
+	update_release
 fi
 
-# ca-certificates
+# CA-Certificates
 CA_PKG="ca-certificates"
-CURRENT_CA_VERSION=$(cat Dockerfile | grep -P -o "$CA_PKG=\K\d+")
-CA_VERSION=$(curl -L -s "https://packages.debian.org/$IMAGE_RELEASE/$CA_PKG" | grep -P -o "$CA_PKG \(\K\d+")
-if [ "$CURRENT_CA_VERSION" != "$CA_VERSION" ]
-then
-	echo "CA-Certificates $CA_VERSION available!"
-
-	RELEASE="${CURRENT_VERSION#*-}"
-	NEXT_VERSION="${CURRENT_VERSION%-*}-$((RELEASE+1))"
+CA_NAME="CA-Certificates"
+CA_REGEX="\d+"
+CA_VERSION=$(curl -L -s "https://packages.debian.org/$IMAGE_CHANNEL/$CA_PKG" | grep -P -o "$CA_PKG \(\K$CA_REGEX")
+CURRENT_CA_VERSION=$(cat Dockerfile | grep -P -o "$CA_PKG=\K$CA_REGEX")
+if [ "$CURRENT_CA_VERSION" != "$CA_VERSION" ]; then
+	echo "$CA_NAME $CA_VERSION available!"
+	update_release
 fi
 
 # SteamCMD
-CURRENT_APP_VERSION=$(cat Dockerfile | grep -P -o "STEAM_SHA=\K\w+")
-APP_VERSION=$(curl -L -s "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" | sha256sum | cut -d ' ' -f 1)
-if [ "$CURRENT_APP_VERSION" != "$APP_VERSION" ]
-then
-	echo "SteamCMD sha256:$APP_VERSION available!"
-
+STEAM_PKG="STEAM_SHA" # sha256 checksum, not package name
+STEAM_NAME="SteamCMD"
+STEAM_REGEX="\w+"
+STEAM_VERSION=$(curl -L -s "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" | sha256sum | cut -d ' ' -f 1)
+CURRENT_STEAM_VERSION=$(cat Dockerfile | grep -P -o "STEAM_SHA=\K$STEAM_REGEX")
+if [ "$CURRENT_STEAM_VERSION" != "$STEAM_VERSION" ]; then
+	echo "$STEAM_NAME sha256:$STEAM_VERSION available!"
+	
+	# Generate pseudo version
+	# ToDo: Scrape real version
 	MINOR_VERSION="${CURRENT_VERSION%-*}"
 	MINOR_VERSION="${MINOR_VERSION#*.}"
-	NEXT_VERSION="1.$((MINOR_VERSION+1))-1"
+	update_version "1.$((MINOR_VERSION+1))-1"
 fi
 
-if [ "$CURRENT_VERSION" == "$NEXT_VERSION" ]
-then
+if ! updates_available; then
 	echo "No updates available."
-else
-	if [ "$1" == "--noconfirm" ]
-	then
-		SAVE="y"
-	else
-		read -p "Save changes? [y/n]" -n 1 -r SAVE && echo
+	exit 0
+fi
+
+# Perform modifications
+if [ "${1+}" = "--noconfirm" ] || confirm_action "Save changes?"; then
+	if [ "$CURRENT_IMAGE_VERSION" != "$IMAGE_VERSION" ]; then
+		sed -i "s|$IMAGE_PKG:$CURRENT_IMAGE_VERSION|$IMAGE_PKG:$IMAGE_VERSION|" Dockerfile
+		CHANGELOG+="$IMAGE_NAME $CURRENT_IMAGE_VERSION -> $IMAGE_VERSION, "
 	fi
-	
-	if [[ $SAVE =~ ^[Yy]$ ]]
-	then
-		if [ "$CURRENT_IMAGE_VERSION" != "$IMAGE_VERSION" ]
-		then
-			sed -i "s|FROM debian:$IMAGE_RELEASE.*|FROM debian:$IMAGE_RELEASE-$IMAGE_VERSION-slim|" Dockerfile
-		fi
+	if [ "$CURRENT_LIBGCC_VERSION" != "$LIBGCC_VERSION" ]; then
+		sed -i "s|$LIBGCC_PKG=$CURRENT_LIBGCC_VERSION|$LIBGCC_PKG=$LIBGCC_VERSION|" Dockerfile
+		CHANGELOG+="$LIBGCC_NAME $CURRENT_LIBGCC_VERSION -> $LIBGCC_VERSION, "
+	fi
+	if [ "$CURRENT_CA_VERSION" != "$CA_VERSION" ]; then
+		sed -i "s|$CA_PKG=$CURRENT_CA_VERSION|$CA_PKG=$CA_VERSION|" Dockerfile
+		CHANGELOG+="$CA_NAME $CURRENT_CA_VERSION -> $CA_VERSION, "
+	fi
+	if [ "$CURRENT_STEAM_VERSION" != "$STEAM_VERSION" ]; then
+		sed -i "s|$STEAM_PKG=$CURRENT_STEAM_VERSION|$STEAM_PKG=$STEAM_VERSION|" Dockerfile
+		CHANGELOG+="$STEAM_NAME $CURRENT_STEAM_VERSION -> $STEAM_VERSION, "
+	fi
+	CHANGELOG="${CHANGELOG%,*}"
 
-		if [ "$CURRENT_LIBGCC_VERSION" != "$LIBGCC_VERSION" ]
-		then
-			sed -i "s|$LIBGCC_PKG=.*|$LIBGCC_PKG=$LIBGCC_VERSION|" Dockerfile
-		fi
-
-		if [ "$CURRENT_CA_VERSION" != "$CA_VERSION" ]
-		then
-			sed -i "s|$CA_PKG=.*|$CA_PKG=$CA_VERSION|" Dockerfile
-		fi
-
-		if [ "$CURRENT_APP_VERSION" != "$APP_VERSION" ]
-		then
-			sed -i "s|STEAM_SHA=.*|STEAM_SHA=$APP_VERSION|" Dockerfile
-		fi
-
-		if [ "$1" == "--noconfirm" ]
-		then
-			COMMIT="y"
-		else
-			read -p "Commit changes? [y/n]" -n 1 -r COMMIT && echo
-		fi
-
-		if [[ $COMMIT =~ ^[Yy]$ ]]
-		then
-			git add Dockerfile
-			git commit -m "Version bump to $NEXT_VERSION"
-			git push
-			git tag "$NEXT_VERSION"
-			git push origin "$NEXT_VERSION"
-		fi
+	if [ "${1+}" = "--noconfirm" ] || confirm_action "Commit changes?"; then
+		commit_changes "$CHANGELOG"
 	fi
 fi
