@@ -2,7 +2,7 @@
 
 
 # Abort on any error
-set -eu
+set -e -u
 
 # Simpler git usage, relative file paths
 CWD=$(dirname "$0")
@@ -10,28 +10,19 @@ cd "$CWD"
 
 # Load helpful functions
 source libs/common.sh
-source libs/debian.sh
+source libs/docker.sh
 
 # Check dependencies
 assert_dependency "jq"
 assert_dependency "curl"
 
-# Current version of docker image
-register_current_version
-
 # Base Image
-update_image "amd64" "stable-\d+-slim"
-
-# 32bit GCC libs
-update_pkg "lib32gcc1" "32bit GCC libs" "false" "\d+:(\d+\.)+\d+-\d+"
-
-# CA-Certificates
-update_pkg "ca-certificates" "CA-Certificates" "false" "\d+"
+IMG_CHANNEL="stable"
+update_image "debian" "Debian" "$IMG_CHANNEL-\d+-slim"
 
 # SteamCMD
-# SHA256 checksum for identification
 # ToDo: Scrape real version
-STEAM_PKG="STEAM_SHA"
+STEAM_PKG="STEAM_SHA" # SHA256 checksum for identification
 CURRENT_STEAM_VERSION=$(cat Dockerfile | grep -P -o "$STEAM_PKG=\K\w+")
 NEW_STEAM_VERSION=$(curl -L -s "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" | sha256sum | cut -d ' ' -f 1)
 if [ "$CURRENT_STEAM_VERSION" != "$NEW_STEAM_VERSION" ]; then
@@ -47,6 +38,11 @@ if ! updates_available; then
 	echo "No updates available."
 	exit 0
 fi
+
+# Packages
+PKG_URL="https://packages.debian.org/$IMG_CHANNEL/amd64"
+update_pkg "lib32gcc1" "32bit GCC libs" "false" "$PKG_URL" "\d+:(\d+\.)+\d+-\d+"
+update_pkg "ca-certificates" "CA-Certificates" "false" "$PKG_URL" "\d{8}"
 
 # Perform modifications
 if [ "${1+}" = "--noconfirm" ] || confirm_action "Save changes?"; then
