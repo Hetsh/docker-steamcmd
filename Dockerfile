@@ -1,4 +1,4 @@
-FROM debian:stable-20200130-slim
+FROM library/debian:stable-20200130-slim
 ENV DEBIAN_FRONTEND="noninteractive"
 RUN apt-get update && apt-get install -y \
     lib32gcc1=1:8.3.0-6 \

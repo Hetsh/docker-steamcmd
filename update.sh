@@ -18,7 +18,7 @@ assert_dependency "curl"
 
 # Base Image
 IMG_CHANNEL="stable"
-update_image "debian" "Debian" "$IMG_CHANNEL-\d+-slim"
+update_image "library/debian" "Debian" "$IMG_CHANNEL-\d+-slim"
 
 # SteamCMD
 # ToDo: Scrape real version
