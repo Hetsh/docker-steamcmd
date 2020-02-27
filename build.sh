@@ -11,7 +11,7 @@ cd "$CWD"
 # Load helpful functions
 source libs/common.sh
 
-# Check acces do docker daemon
+# Check access do docker daemon
 assert_dependency "docker"
 if ! docker version &> /dev/null; then
     echo "Docker daemon is not running or you have unsufficient permissions!"
@@ -27,5 +27,5 @@ if confirm_action "Test image?"; then
 	--rm \
 	--interactive \
 	--name "$APP_NAME" \
-	"$APP_NAME" ./steamcmd.sh +login anonymous +quit
+	"$APP_NAME" steamcmd.sh +login anonymous +quit
 fi

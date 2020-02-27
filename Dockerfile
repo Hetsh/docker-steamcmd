@@ -1,6 +1,6 @@
 FROM library/debian:stable-20200130-slim
-RUN apt-get update && \
-	DEBIAN_FRONTEND="noninteractive" && \
+RUN DEBIAN_FRONTEND="noninteractive" && \
+    apt-get update && \
     apt-get install -y \
     lib32gcc1=1:8.3.0-6 \
     ca-certificates=20190110
@@ -11,4 +11,4 @@ ARG STEAM_ARCHIVE="steamcmd_linux.tar.gz"
 ADD "https://steamcdn-a.akamaihd.net/client/installer/$STEAM_ARCHIVE" "$STEAM_DIR/$STEAM_ARCHIVE"
 RUN tar --extract --directory "$STEAM_DIR" --file "$STEAM_DIR/$STEAM_ARCHIVE" && \
     rm "$STEAM_DIR/$STEAM_ARCHIVE"
-WORKDIR "$STEAM_DIR"
+ENV PATH="$STEAM_DIR:$PATH"
