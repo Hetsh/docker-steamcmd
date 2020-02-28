@@ -3,7 +3,8 @@ RUN DEBIAN_FRONTEND="noninteractive" && \
     apt-get update && \
     apt-get install -y \
     lib32gcc1=1:8.3.0-6 \
-    ca-certificates=20190110
+    ca-certificates=20190110 && \
+    rm -r /var/lib/apt/lists /var/cache/apt
 
 ARG STEAM_DIR="/var/lib/steam"
 ARG STEAM_ARCHIVE="steamcmd_linux.tar.gz"
