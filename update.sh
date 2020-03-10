@@ -45,10 +45,10 @@ update_pkg "lib32gcc1" "32bit GCC libs" "false" "$PKG_URL" "\d+:(\d+\.)+\d+-\d+"
 update_pkg "ca-certificates" "CA-Certificates" "false" "$PKG_URL" "\d{8}"
 
 # Perform modifications
-if [ "${1+}" = "--noconfirm" ] || confirm_action "Save changes?"; then
+if [ "${1-}" = "--noconfirm" ] || confirm_action "Save changes?"; then
 	save_changes
 
-	if [ "${1+}" = "--noconfirm" ] || confirm_action "Commit changes?"; then
+	if [ "${1-}" = "--noconfirm" ] || confirm_action "Commit changes?"; then
 		commit_changes
 	fi
 fi
