@@ -34,15 +34,15 @@ if [ "$CURRENT_STEAM_VERSION" != "$NEW_STEAM_VERSION" ]; then
 	update_version "1.$((MINOR_VERSION+1))-1"
 fi
 
-if ! updates_available; then
-	echo "No updates available."
-	exit 0
-fi
-
 # Packages
 PKG_URL="https://packages.debian.org/$IMG_CHANNEL/amd64"
 update_pkg "lib32gcc1" "32bit GCC libs" "false" "$PKG_URL" "\d+:(\d+\.)+\d+-\d+"
 update_pkg "ca-certificates" "CA-Certificates" "false" "$PKG_URL" "\d{8}"
+
+if ! updates_available; then
+	echo "No updates available."
+	exit 0
+fi
 
 # Perform modifications
 if [ "${1-}" = "--noconfirm" ] || confirm_action "Save changes?"; then
