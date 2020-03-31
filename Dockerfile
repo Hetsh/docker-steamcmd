@@ -1,9 +1,9 @@
-FROM library/debian:stable-20200224-slim
+FROM library/debian:stable-20200327-slim
 RUN DEBIAN_FRONTEND="noninteractive" && \
     apt-get update && \
     apt-get install -y \
-    lib32gcc1=1:8.3.0-6 \
-    ca-certificates=20190110 && \
+        lib32gcc1=1:8.3.0-6 \
+        ca-certificates=20190110 && \
     rm -r /var/lib/apt/lists /var/cache/apt
 
 ARG STEAM_DIR="/var/lib/steam"
