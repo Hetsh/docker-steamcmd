@@ -1,4 +1,4 @@
-FROM library/debian:stable-20200327-slim
+FROM library/debian:stable-20200414-slim
 RUN DEBIAN_FRONTEND="noninteractive" && \
     apt-get update && \
     apt-get install -y \
