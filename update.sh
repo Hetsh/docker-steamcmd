@@ -16,7 +16,7 @@ source libs/docker.sh
 assert_dependency "jq"
 assert_dependency "curl"
 
-# Base Image
+# Debian Stable
 IMG_CHANNEL="stable"
 update_image "library/debian" "Debian" "false" "$IMG_CHANNEL-\d+-slim"
 

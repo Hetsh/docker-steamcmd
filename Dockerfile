@@ -1,7 +1,7 @@
-FROM library/debian:stable-20200422-slim
+FROM library/debian:stable-20200511-slim
 RUN DEBIAN_FRONTEND="noninteractive" && \
     apt-get update && \
-    apt-get install -y \
+    apt-get install --assume-yes \
         lib32gcc1=1:8.3.0-6 \
         ca-certificates=20190110 && \
     rm -r /var/lib/apt/lists /var/cache/apt
