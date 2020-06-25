@@ -25,6 +25,7 @@ docker build --tag "$APP_NAME" .
 if confirm_action "Test image?"; then
 	docker run \
 	--rm \
+	--tty \
 	--interactive \
 	--mount type=bind,source=/etc/localtime,target=/etc/localtime,readonly \
 	--name "$APP_NAME" \
