@@ -24,7 +24,7 @@ update_image "library/debian" "Debian" "false" "$IMG_CHANNEL-\d+-slim"
 # ToDo: Scrape real version
 STEAM_PKG="STEAM_SHA" # SHA256 checksum for identification
 CURRENT_STEAM_VERSION=$(cat Dockerfile | grep -P -o "$STEAM_PKG=\K\w+")
-NEW_STEAM_VERSION=$(curl -L -s "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" | sha256sum | cut -d ' ' -f 1)
+NEW_STEAM_VERSION=$(curl --silent --location "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" | sha256sum | cut -d ' ' -f 1)
 if [ "$CURRENT_STEAM_VERSION" != "$NEW_STEAM_VERSION" ]; then
 	prepare_update "$STEAM_PKG" "SteamCMD" "$CURRENT_STEAM_VERSION" "$NEW_STEAM_VERSION"
 
