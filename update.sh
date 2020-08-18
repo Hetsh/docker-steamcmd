@@ -40,7 +40,7 @@ update_pkg "lib32gcc1" "32bit GCC libs" "false" "$PKG_URL" "\d+:(\d+\.)+\d+-\d+"
 update_pkg "ca-certificates" "CA-Certificates" "false" "$PKG_URL" "\d{8}"
 
 if ! updates_available; then
-	echo "No updates available."
+	#echo "No updates available."
 	exit 0
 fi
 
