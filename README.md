@@ -19,4 +19,5 @@ RUN DEBIAN_FRONTEND="noninteractive" && apt-get install -y libsdl2-2.0-0
 ```
 
 ## Fork Me!
-This is an open project (visit [GitHub](https://github.com/Hetsh/docker-steamcmd)). Please feel free to ask questions, file an issue or contribute to it.
+This is an open project (visit [GitHub](https://github.com/Hetsh/docker-steamcmd)).
+Please feel free to ask questions, file an issue or contribute to it.
