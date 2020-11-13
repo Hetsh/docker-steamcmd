@@ -8,15 +8,20 @@ FROM hetsh/steamcmd:<version>
 ```
 `steamcmd.sh` can then be called from everywhere since it is included in `PATH`.
 
-## Known Errors
+## Ignored Errors
+SteamCMD emits a few error and warning messages during different stages of execution despite working properly.
+Some can be fixed by adding the "required" libraries, but this would increase the image size by a lot.
+For this case, i made the decision to not include them for now, but you can install the libraries if you want:
+```Dockerfile
+RUN DEBIAN_FRONTEND="noninteractive" && apt-get install --no-install-recommends --assume-yes <package>
+```
+
+### [#1](https://github.com/Hetsh/docker-steamcmd/issues/1) Missing libsdl
 > Failed to init SDL priority manager: SDL not found  
 > Failed to set thread priority: per-thread setup failed  
 > Failed to set thread priority: per-thread setup failed  
 
-This error occurs because steamcmd cannot find libsdl. Since installing `libsdl` in this base image would increase its size by 50% and `steamcmd` seems to work fine without it, i made the decision to not include it for now. If you encounter any breaking errors with `steamcmd` or a game server you want to set up, `libsdl` can be easily installed:
-```Dockerfile
-RUN DEBIAN_FRONTEND="noninteractive" && apt-get install -y libsdl2-2.0-0
-```
+The debian package is `libsdl2-2.0-0`.
 
 ## Fork Me!
 This is an open project (visit [GitHub](https://github.com/Hetsh/docker-steamcmd)).
