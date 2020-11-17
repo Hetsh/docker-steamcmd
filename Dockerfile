@@ -16,6 +16,13 @@ RUN mkdir "$STEAM_DIR" && \
 ENV PATH="$STEAM_DIR:$PATH"
 
 # Update client
-ARG STEAM_VERSION="02 Nov 2020 21:30:00"
+ARG STEAM_VERSION="1603576187"
 RUN steamcmd.sh +quit && \
-    rm -r /tmp/dumps /root/.steam /root/Steam
+    rm -r \
+        $STEAM_DIR/package/steamcmd_bins_linux.zip* \
+        $STEAM_DIR/package/steamcmd_linux.zip* \
+        $STEAM_DIR/package/steamcmd_public_all.zip* \
+        $STEAM_DIR/package/steamcmd_siteserverui_linux.zip* \
+        /tmp/dumps \
+        /root/.steam \
+        /root/Steam
