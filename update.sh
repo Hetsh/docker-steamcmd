@@ -20,20 +20,6 @@ assert_dependency "curl"
 IMG_CHANNEL="stable"
 update_image "library/debian" "Debian" "false" "$IMG_CHANNEL-\d+-slim"
 
-# SteamCMD
-# ToDo: Scrape real version
-STEAM_PKG="STEAM_SHA" # SHA256 checksum for identification
-CURRENT_STEAM_VERSION=$(cat Dockerfile | grep -P -o "$STEAM_PKG=\K\w+")
-NEW_STEAM_VERSION=$(curl --silent --location "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" | sha256sum | cut -d ' ' -f 1)
-if [ "$CURRENT_STEAM_VERSION" != "$NEW_STEAM_VERSION" ]; then
-	prepare_update "$STEAM_PKG" "SteamCMD" "$CURRENT_STEAM_VERSION" "$NEW_STEAM_VERSION"
-
-	# Generate pseudo version
-	MINOR_VERSION="${CURRENT_VERSION%-*}"
-	MINOR_VERSION="${MINOR_VERSION#*.}"
-	update_version "1.$((MINOR_VERSION+1))-1"
-fi
-
 # Packages
 PKG_URL="https://packages.debian.org/$IMG_CHANNEL/amd64"
 update_pkg "lib32gcc1" "32bit GCC libs" "false" "$PKG_URL" "\d+:(\d+\.)+\d+-\d+"
