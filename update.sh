@@ -18,7 +18,11 @@ assert_dependency "curl"
 
 # Debian Stable
 IMG_CHANNEL="stable"
-update_image "library/debian" "Debian" "false" "$IMG_CHANNEL-\d+-slim"
+update_image "library/debian" "Debian" "true" "$IMG_CHANNEL-\d+-slim"
+# Only keep date for version
+if updates_available; then
+	update_version $(echo $_NEXT_VERSION | grep --only-matching --perl-regexp "\d+")
+fi
 
 # Packages
 PKG_URL="https://packages.debian.org/$IMG_CHANNEL/amd64"
