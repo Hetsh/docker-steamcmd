@@ -3,7 +3,7 @@ ARG DEBIAN_FRONTEND="noninteractive"
 RUN apt-get update && \
     apt-get install --assume-yes \
         lib32gcc1=1:8.3.0-6 \
-        ca-certificates=20190110 && \
+        ca-certificates=20200601~deb10u2 && \
     rm -r /var/lib/apt/lists /var/cache/apt
 
 ARG STEAM_DIR="/var/lib/steam"
