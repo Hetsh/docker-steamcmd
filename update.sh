@@ -27,7 +27,7 @@ fi
 # Packages
 PKG_URL="https://packages.debian.org/$IMG_CHANNEL/amd64"
 update_pkg "lib32gcc1" "32bit GCC libs" "false" "$PKG_URL" "\d+:(\d+\.)+\d+-\d+"
-update_pkg "ca-certificates" "CA-Certificates" "false" "$PKG_URL" "\d{8}"
+update_pkg "ca-certificates" "CA-Certificates" "false" "$PKG_URL" "\d{8}~deb\d+u\d+"
 
 if ! updates_available; then
 	#echo "No updates available."
