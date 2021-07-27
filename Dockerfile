@@ -13,6 +13,7 @@ RUN apt update && \
     STEAM_ARCHIVE="steamcmd_linux.tar.gz" && \
     wget --quiet  "https://steamcdn-a.akamaihd.net/client/installer/$STEAM_ARCHIVE" && \
     apt purge --assume-yes --auto-remove wget && \
+    rm -r /var/lib/apt/lists /var/cache/apt && \
     mkdir "$STEAM_DIR" && \
     tar --extract --directory "$STEAM_DIR" --file "$STEAM_ARCHIVE" && \
     rm "$STEAM_ARCHIVE"
