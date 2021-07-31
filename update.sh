@@ -18,8 +18,8 @@ assert_dependency "curl"
 
 # Debian Stable
 IMG_CHANNEL="stable"
-update_image "library/debian" "Debian" "true" "$IMG_CHANNEL-\d+-slim"
-# Only keep date for version
+update_image "amd64/debian" "Debian" "true" "$IMG_CHANNEL-\d+-slim"
+# Only use date for tag
 if updates_available; then
 	update_version $(echo $_NEXT_VERSION | grep --only-matching --perl-regexp "\d+")
 fi
