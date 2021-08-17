@@ -31,7 +31,10 @@ case "${1-}" in
 			--tty \
 			--interactive \
 			--mount type=bind,source=/etc/localtime,target=/etc/localtime,readonly \
-			"$IMG_NAME:test"
+			"$IMG_NAME:test" \
+			steamcmd.sh \
+			+login anonymous \
+			+quit
 	;;
 	# Build if it does not exist and push image to docker hub
 	"--upload")
