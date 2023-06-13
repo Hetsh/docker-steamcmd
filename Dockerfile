@@ -2,8 +2,8 @@ FROM amd64/debian:stable-20230612-slim
 ARG DEBIAN_FRONTEND="noninteractive"
 RUN apt update && \
     apt install --assume-yes \
-        lib32gcc-s1=10.2.1-6 \
-        ca-certificates=20210119 && \
+        lib32gcc-s1=12.2.0-14 \
+        ca-certificates=20230311 && \
     rm -r /var/lib/apt/lists /var/cache/apt
 
 # Installation
