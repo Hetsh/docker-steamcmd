@@ -1,4 +1,4 @@
-FROM amd64/debian:stable-20230814-slim
+FROM amd64/debian:stable-20230904-slim
 ARG DEBIAN_FRONTEND="noninteractive"
 RUN apt update && \
     apt install --assume-yes \
